@@ -14,7 +14,7 @@ ROOT_MAJOR := $(shell $(RC) --version | cut -d'.' -f1)
 SrcSuf = cc
 PcmSuf = _rdict.pcm
 
-CXXFLAGS += $(ROOTCFLAGS) -D_FILE_OFFSET_BITS=64 -DDROP_CGAL -I. -Iexternal -Iexternal/tcl
+CXXFLAGS += $(ROOTCFLAGS) -D_FILE_OFFSET_BITS=64 -DDROP_CGAL -I. -Iexternal
 DELPHES_LIBS = $(shell $(RC) --libs) -lEG
 DISPLAY_LIBS = $(shell $(RC) --evelibs) -lGuiHtml
 
@@ -564,7 +564,8 @@ tmp/classes/DelphesXDRWriter.$(ObjSuf): \
 tmp/external/ExRootAnalysis/ExRootConfReader.$(ObjSuf): \
 	external/ExRootAnalysis/ExRootConfReader.$(SrcSuf) \
 	external/ExRootAnalysis/ExRootConfReader.h \
-	external/tcl/tcl.h
+	external/cJSON/cJSON.h \
+	external/cJSON/cJSON_Utils.h
 tmp/external/ExRootAnalysis/ExRootFilter.$(ObjSuf): \
 	external/ExRootAnalysis/ExRootFilter.$(SrcSuf) \
 	external/ExRootAnalysis/ExRootFilter.h \
@@ -1860,73 +1861,13 @@ ifeq ($(HAS_PYTHIA8),true)
 DISPLAY_OBJ +=  \
 	
 endif
-tmp/external/tcl/panic.$(ObjSuf): \
-	external/tcl/panic.c
-tmp/external/tcl/tclAlloc.$(ObjSuf): \
-	external/tcl/tclAlloc.c
-tmp/external/tcl/tclBasic.$(ObjSuf): \
-	external/tcl/tclBasic.c
-tmp/external/tcl/tclCkalloc.$(ObjSuf): \
-	external/tcl/tclCkalloc.c
-tmp/external/tcl/tclCmdAH.$(ObjSuf): \
-	external/tcl/tclCmdAH.c
-tmp/external/tcl/tclCmdIL.$(ObjSuf): \
-	external/tcl/tclCmdIL.c
-tmp/external/tcl/tclCmdMZ.$(ObjSuf): \
-	external/tcl/tclCmdMZ.c
-tmp/external/tcl/tclCompExpr.$(ObjSuf): \
-	external/tcl/tclCompExpr.c
-tmp/external/tcl/tclCompile.$(ObjSuf): \
-	external/tcl/tclCompile.c
-tmp/external/tcl/tclExecute.$(ObjSuf): \
-	external/tcl/tclExecute.c
-tmp/external/tcl/tclGet.$(ObjSuf): \
-	external/tcl/tclGet.c
-tmp/external/tcl/tclHash.$(ObjSuf): \
-	external/tcl/tclHash.c
-tmp/external/tcl/tclIndexObj.$(ObjSuf): \
-	external/tcl/tclIndexObj.c
-tmp/external/tcl/tclListObj.$(ObjSuf): \
-	external/tcl/tclListObj.c
-tmp/external/tcl/tclNamesp.$(ObjSuf): \
-	external/tcl/tclNamesp.c
-tmp/external/tcl/tclObj.$(ObjSuf): \
-	external/tcl/tclObj.c
-tmp/external/tcl/tclParse.$(ObjSuf): \
-	external/tcl/tclParse.c
-tmp/external/tcl/tclPreserve.$(ObjSuf): \
-	external/tcl/tclPreserve.c
-tmp/external/tcl/tclProc.$(ObjSuf): \
-	external/tcl/tclProc.c
-tmp/external/tcl/tclStringObj.$(ObjSuf): \
-	external/tcl/tclStringObj.c
-tmp/external/tcl/tclUtil.$(ObjSuf): \
-	external/tcl/tclUtil.c
-tmp/external/tcl/tclVar.$(ObjSuf): \
-	external/tcl/tclVar.c
-TCL_OBJ +=  \
-	tmp/external/tcl/panic.$(ObjSuf) \
-	tmp/external/tcl/tclAlloc.$(ObjSuf) \
-	tmp/external/tcl/tclBasic.$(ObjSuf) \
-	tmp/external/tcl/tclCkalloc.$(ObjSuf) \
-	tmp/external/tcl/tclCmdAH.$(ObjSuf) \
-	tmp/external/tcl/tclCmdIL.$(ObjSuf) \
-	tmp/external/tcl/tclCmdMZ.$(ObjSuf) \
-	tmp/external/tcl/tclCompExpr.$(ObjSuf) \
-	tmp/external/tcl/tclCompile.$(ObjSuf) \
-	tmp/external/tcl/tclExecute.$(ObjSuf) \
-	tmp/external/tcl/tclGet.$(ObjSuf) \
-	tmp/external/tcl/tclHash.$(ObjSuf) \
-	tmp/external/tcl/tclIndexObj.$(ObjSuf) \
-	tmp/external/tcl/tclListObj.$(ObjSuf) \
-	tmp/external/tcl/tclNamesp.$(ObjSuf) \
-	tmp/external/tcl/tclObj.$(ObjSuf) \
-	tmp/external/tcl/tclParse.$(ObjSuf) \
-	tmp/external/tcl/tclPreserve.$(ObjSuf) \
-	tmp/external/tcl/tclProc.$(ObjSuf) \
-	tmp/external/tcl/tclStringObj.$(ObjSuf) \
-	tmp/external/tcl/tclUtil.$(ObjSuf) \
-	tmp/external/tcl/tclVar.$(ObjSuf)
+tmp/external/cJSON/cJSON.$(ObjSuf): \
+	external/cJSON/cJSON.c
+tmp/external/cJSON/cJSON_Utils.$(ObjSuf): \
+	external/cJSON/cJSON_Utils.c
+JSON_OBJ +=  \
+	tmp/external/cJSON/cJSON.$(ObjSuf) \
+	tmp/external/cJSON/cJSON_Utils.$(ObjSuf)
 modules/DenseTrackFilter.h: \
 	classes/DelphesModule.h
 	@touch $@
@@ -2438,7 +2379,7 @@ all: $(NOFASTJET) $(DELPHES) $(EXECUTABLE)
 display: $(DISPLAY)
 endif
 
-$(NOFASTJET): $(DELPHES_DICT_OBJ) $(DELPHES_OBJ) $(TCL_OBJ)
+$(NOFASTJET): $(DELPHES_DICT_OBJ) $(DELPHES_OBJ) $(JSON_OBJ)
 	@mkdir -p $(@D)
 	@echo ">> Building $@"
 ifeq ($(PLATFORM),macosx)
@@ -2454,7 +2395,7 @@ else
 endif
 endif
 
-$(DELPHES): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(TCL_OBJ)
+$(DELPHES): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(JSON_OBJ)
 	@mkdir -p $(@D)
 	@echo ">> Building $@"
 ifeq ($(PLATFORM),macosx)
@@ -2470,7 +2411,7 @@ else
 endif
 endif
 
-$(DISPLAY): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(TCL_OBJ)
+$(DISPLAY): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(JSON_OBJ)
 	@mkdir -p $(@D)
 	@echo ">> Building $@"
 ifeq ($(PLATFORM),macosx)
@@ -2487,7 +2428,7 @@ endif
 endif
 
 clean:
-	@rm -f $(DELPHES_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(TCL_OBJ) core
+	@rm -f $(DELPHES_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(JSON_OBJ) core
 	@rm -rf tmp
 
 distclean: clean
@@ -2555,7 +2496,7 @@ $(DISPLAY_DICT_OBJ): %.$(ObjSuf): %.$(SrcSuf)
 	@echo ">> Compiling $<"
 	@$(CXX) $(CXXFLAGS) -c $< $(OutPutOpt)$@
 
-$(TCL_OBJ): tmp/%.$(ObjSuf): %.c
+$(JSON_OBJ): tmp/%.$(ObjSuf): %.c
 	@mkdir -p $(@D)
 	@echo ">> Compiling $<"
 	@$(CC) $(patsubst -std=%,,$(CXXFLAGS)) -c $< $(OutPutOpt)$@
@@ -2565,7 +2506,7 @@ $(EXECUTABLE_OBJ): tmp/%.$(ObjSuf): %.cpp
 	@echo ">> Compiling $<"
 	@$(CXX) $(CXXFLAGS) -c $< $(OutPutOpt)$@
 
-$(EXECUTABLE): %$(ExeSuf): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(TCL_OBJ)
+$(EXECUTABLE): %$(ExeSuf): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(JSON_OBJ)
 	@echo ">> Building $@"
 	@$(LD) $(LDFLAGS) $^ $(DELPHES_LIBS) $(OutPutOpt)$@
 

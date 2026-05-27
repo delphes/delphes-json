@@ -119,11 +119,11 @@ proc sourceDeps {srcPrefix args} {
   puts {endif}
 }
 
-proc tclDeps {} {
+proc jsonDeps {} {
 
   global prefix suffix srcSuf objSuf
 
-  set source [lsort [glob -nocomplain {external/tcl/*.c}]]
+  set source [lsort [glob -nocomplain {external/cJSON/*.c}]]
 
   set srcObjFiles {}
 
@@ -136,7 +136,7 @@ proc tclDeps {} {
     dependencies $fileName "$srcObjName$objSuf:$suffix$fileName"
   }
 
-  puts -nonewline "TCL_OBJ += $suffix"
+  puts -nonewline "JSON_OBJ += $suffix"
   puts [join $srcObjFiles $suffix]
 }
 
@@ -195,7 +195,7 @@ ROOT_MAJOR := $(shell $(RC) --version | cut -d'.' -f1)
 SrcSuf = cc
 PcmSuf = _rdict.pcm
 
-CXXFLAGS += $(ROOTCFLAGS) -D_FILE_OFFSET_BITS=64 -DDROP_CGAL -I. -Iexternal -Iexternal/tcl
+CXXFLAGS += $(ROOTCFLAGS) -D_FILE_OFFSET_BITS=64 -DDROP_CGAL -I. -Iexternal
 DELPHES_LIBS = $(shell $(RC) --libs) -lEG
 DISPLAY_LIBS = $(shell $(RC) --evelibs) -lGuiHtml
 
@@ -310,7 +310,7 @@ sourceDeps {FASTJET} {modules/FastJet*.cc} {modules/RunPUPPI.cc} {external/PUPPI
 
 sourceDeps {DISPLAY} {display/*.cc}
 
-tclDeps
+jsonDeps
 
 headerDeps
 
@@ -325,7 +325,7 @@ all: $(NOFASTJET) $(DELPHES) $(EXECUTABLE)
 display: $(DISPLAY)
 endif
 
-$(NOFASTJET): $(DELPHES_DICT_OBJ) $(DELPHES_OBJ) $(TCL_OBJ)
+$(NOFASTJET): $(DELPHES_DICT_OBJ) $(DELPHES_OBJ) $(JSON_OBJ)
 	@mkdir -p $(@D)
 	@echo ">> Building $@"
 ifeq ($(PLATFORM),macosx)
@@ -341,7 +341,7 @@ else
 endif
 endif
 
-$(DELPHES): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(TCL_OBJ)
+$(DELPHES): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(JSON_OBJ)
 	@mkdir -p $(@D)
 	@echo ">> Building $@"
 ifeq ($(PLATFORM),macosx)
@@ -357,7 +357,7 @@ else
 endif
 endif
 
-$(DISPLAY): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(TCL_OBJ)
+$(DISPLAY): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(JSON_OBJ)
 	@mkdir -p $(@D)
 	@echo ">> Building $@"
 ifeq ($(PLATFORM),macosx)
@@ -374,7 +374,7 @@ endif
 endif
 
 clean:
-	@rm -f $(DELPHES_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(TCL_OBJ) core
+	@rm -f $(DELPHES_DICT_OBJ) $(DISPLAY_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(DISPLAY_OBJ) $(JSON_OBJ) core
 	@rm -rf tmp
 
 distclean: clean
@@ -442,7 +442,7 @@ $(DISPLAY_DICT_OBJ): %.$(ObjSuf): %.$(SrcSuf)
 	@echo ">> Compiling $<"
 	@$(CXX) $(CXXFLAGS) -c $< $(OutPutOpt)$@
 
-$(TCL_OBJ): tmp/%.$(ObjSuf): %.c
+$(JSON_OBJ): tmp/%.$(ObjSuf): %.c
 	@mkdir -p $(@D)
 	@echo ">> Compiling $<"
 	@$(CC) $(patsubst -std=%,,$(CXXFLAGS)) -c $< $(OutPutOpt)$@
@@ -452,7 +452,7 @@ $(EXECUTABLE_OBJ): tmp/%.$(ObjSuf): %.cpp
 	@echo ">> Compiling $<"
 	@$(CXX) $(CXXFLAGS) -c $< $(OutPutOpt)$@
 
-$(EXECUTABLE): %$(ExeSuf): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(TCL_OBJ)
+$(EXECUTABLE): %$(ExeSuf): $(DELPHES_DICT_OBJ) $(FASTJET_DICT_OBJ) $(DELPHES_OBJ) $(FASTJET_OBJ) $(JSON_OBJ)
 	@echo ">> Building $@"
 	@$(LD) $(LDFLAGS) $^ $(DELPHES_LIBS) $(OutPutOpt)$@
 

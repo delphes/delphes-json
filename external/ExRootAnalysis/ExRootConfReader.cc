@@ -1,7 +1,7 @@
 
 /** \class ExRootConfReader
  *
- *  Class handling output ROOT tree
+ *  Class configuration data
  *
  *  \author P. Demin - UCL, Louvain-la-Neuve
  *
@@ -9,43 +9,44 @@
 
 #include "ExRootAnalysis/ExRootConfReader.h"
 
-#include "tcl/tcl.h"
-
-#include "TSystem.h"
-
 #include <fstream>
-#include <iomanip>
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <string>
+
+#include "cJSON/cJSON.h"
+#include "cJSON/cJSON_Utils.h"
 
 using namespace std;
 
-static Tcl_ObjCmdProc ModuleObjCmdProc;
-static Tcl_ObjCmdProc SourceObjCmdProc;
-
 //------------------------------------------------------------------------------
 
-ExRootConfReader::ExRootConfReader() :
-  fTopDir(0), fTclInterp(0)
+ExRootConfReader::ExRootConfReader()
 {
-  fTclInterp = Tcl_CreateInterp();
-
-  Tcl_CreateObjCommand(fTclInterp, "module", ModuleObjCmdProc, this, 0);
-  Tcl_CreateObjCommand(fTclInterp, "source", SourceObjCmdProc, this, 0);
 }
 
 //------------------------------------------------------------------------------
 
 ExRootConfReader::~ExRootConfReader()
 {
-  Tcl_DeleteInterp(fTclInterp);
+  if(fData) cJSON_Delete(fData);
 }
 
 //------------------------------------------------------------------------------
 
-void ExRootConfReader::ReadFile(const char *fileName, bool isTop)
+void ExRootConfReader::ReadData(const char *data)
+{
+  stringstream message;
+  fData = cJSON_Parse(data);
+  if(!fData)
+  {
+    message << "can't read configuration data";
+    throw runtime_error(message.str());
+  }
+}
+
+//------------------------------------------------------------------------------
+
+void ExRootConfReader::ReadFile(const char *fileName)
 {
   stringstream message;
   int length;
@@ -58,8 +59,6 @@ void ExRootConfReader::ReadFile(const char *fileName, bool isTop)
     throw runtime_error(message.str());
   }
 
-  if(isTop) fTopDir = gSystem->DirName(fileName);
-
   length = inputFileStream.tellg();
   inputFileStream.seekg(0, ios::beg);
   inputFileStream.clear();
@@ -67,23 +66,12 @@ void ExRootConfReader::ReadFile(const char *fileName, bool isTop)
   buffer[length] = 0;
   inputFileStream.read(buffer, length);
 
-  Tcl_Obj *cmdObjPtr = Tcl_NewObj();
-  cmdObjPtr->bytes = buffer;
-  cmdObjPtr->length = length;
-
-  Tcl_IncrRefCount(cmdObjPtr);
-
-  if(Tcl_EvalObj(fTclInterp, cmdObjPtr) != TCL_OK)
+  fData = cJSON_Parse(buffer);
+  if(!fData)
   {
-    message << "can't read configuration file " << fileName << endl;
-    message << Tcl_GetStringResult(fTclInterp);
+    message << "can't read configuration file " << fileName;
     throw runtime_error(message.str());
   }
-
-  cmdObjPtr->bytes = 0;
-  cmdObjPtr->length = 0;
-
-  Tcl_DecrRefCount(cmdObjPtr);
 
   delete[] buffer;
 }
@@ -92,10 +80,7 @@ void ExRootConfReader::ReadFile(const char *fileName, bool isTop)
 
 ExRootConfParam ExRootConfReader::GetParam(const char *name)
 {
-  Tcl_Obj *object;
-  Tcl_Obj *variableName = Tcl_NewStringObj(const_cast<char *>(name), -1);
-  object = Tcl_ObjGetVar2(fTclInterp, variableName, 0, TCL_GLOBAL_ONLY);
-  return ExRootConfParam(name, object, fTclInterp);
+  return ExRootConfParam(name, cJSONUtils_GetPointerCaseSensitive(fData, name));
 }
 
 //------------------------------------------------------------------------------
@@ -165,62 +150,8 @@ const char *ExRootConfReader::GetString(const char *name, const char *defaultVal
 
 //------------------------------------------------------------------------------
 
-int ModuleObjCmdProc(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
-{
-  Tcl_Obj *object;
-  TString name;
-  int rc;
-
-  if(objc < 3)
-  {
-    Tcl_WrongNumArgs(interp, 1, objv, "className moduleName ?arg...?");
-    return TCL_ERROR;
-  }
-
-  // add module to a list of modules to be created
-
-  if(objc > 3)
-  {
-    object = Tcl_NewListObj(0, 0);
-    Tcl_ListObjAppendElement(interp, object, Tcl_NewStringObj("namespace", -1));
-    Tcl_ListObjAppendElement(interp, object, Tcl_NewStringObj("eval", -1));
-    Tcl_ListObjAppendList(interp, object, Tcl_NewListObj(objc - 2, objv + 2));
-
-    rc = Tcl_GlobalEvalObj(interp, object);
-
-    if(rc != TCL_OK) return rc;
-
-    name = Tcl_GetStringFromObj(objv[2], 0);
-    object = Tcl_NewStringObj(name + "::Class", -1);
-    Tcl_ObjSetVar2(interp, object, 0, objv[1], TCL_GLOBAL_ONLY);
-  }
-
-  return TCL_OK;
-}
-
-//------------------------------------------------------------------------------
-
-int SourceObjCmdProc(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
-{
-  ExRootConfReader *reader = static_cast<ExRootConfReader *>(clientData);
-  stringstream fileName;
-
-  if(objc != 2)
-  {
-    Tcl_WrongNumArgs(interp, 1, objv, "fileName");
-    return TCL_ERROR;
-  }
-
-  fileName << reader->GetTopDir() << "/" << Tcl_GetStringFromObj(objv[1], 0);
-  reader->ReadFile(fileName.str().c_str(), false);
-
-  return TCL_OK;
-}
-
-//------------------------------------------------------------------------------
-
-ExRootConfParam::ExRootConfParam(const char *name, Tcl_Obj *object, Tcl_Interp *interp) :
-  fName(name), fObject(object), fTclInterp(interp)
+ExRootConfParam::ExRootConfParam(const char *name, cJSON *data) :
+  TNamed(name, ""), fData(data)
 {
 }
 
@@ -228,30 +159,14 @@ ExRootConfParam::ExRootConfParam(const char *name, Tcl_Obj *object, Tcl_Interp *
 
 int ExRootConfParam::GetInt(int defaultValue)
 {
-  stringstream message;
-  int result = defaultValue;
-  if(fObject && TCL_OK != Tcl_GetIntFromObj(fTclInterp, fObject, &result))
-  {
-    message << "parameter '" << fName << "' is not an integer." << endl;
-    message << fName << " = " << Tcl_GetStringFromObj(fObject, 0);
-    throw runtime_error(message.str());
-  }
-  return result;
+  return GetDouble(defaultValue);
 }
 
 //------------------------------------------------------------------------------
 
 long ExRootConfParam::GetLong(long defaultValue)
 {
-  stringstream message;
-  long result = defaultValue;
-  if(fObject && TCL_OK != Tcl_GetLongFromObj(fTclInterp, fObject, &result))
-  {
-    message << "parameter '" << fName << "' is not an long integer." << endl;
-    message << fName << " = " << Tcl_GetStringFromObj(fObject, 0);
-    throw runtime_error(message.str());
-  }
-  return result;
+  return GetDouble(defaultValue);
 }
 
 //------------------------------------------------------------------------------
@@ -259,14 +174,14 @@ long ExRootConfParam::GetLong(long defaultValue)
 double ExRootConfParam::GetDouble(double defaultValue)
 {
   stringstream message;
-  double result = defaultValue;
-  if(fObject && TCL_OK != Tcl_GetDoubleFromObj(fTclInterp, fObject, &result))
-  {
-    message << "parameter '" << fName << "' is not a number." << endl;
-    message << fName << " = " << Tcl_GetStringFromObj(fObject, 0);
-    throw runtime_error(message.str());
-  }
-  return result;
+
+  if(!fData) return defaultValue;
+
+  if(cJSON_IsNumber(fData)) return cJSON_GetNumberValue(fData);
+
+  message << "parameter '" << GetName() << "' is not a number." << endl;
+  message << GetName() << " = " << cJSON_Print(fData);
+  throw runtime_error(message.str());
 }
 
 //------------------------------------------------------------------------------
@@ -274,51 +189,49 @@ double ExRootConfParam::GetDouble(double defaultValue)
 bool ExRootConfParam::GetBool(bool defaultValue)
 {
   stringstream message;
-  int result = defaultValue;
-  if(fObject && TCL_OK != Tcl_GetBooleanFromObj(fTclInterp, fObject, &result))
-  {
-    message << "parameter '" << fName << "' is not a boolean." << endl;
-    message << fName << " = " << Tcl_GetStringFromObj(fObject, 0);
-    throw runtime_error(message.str());
-  }
-  return result;
+
+  if(!fData) return defaultValue;
+
+  if(cJSON_IsBool(fData)) return cJSON_IsTrue(fData);
+
+  if(cJSON_IsNumber(fData)) return cJSON_GetNumberValue(fData);
+
+  message << "parameter '" << GetName() << "' is not a boolean." << endl;
+  message << GetName() << " = " << cJSON_Print(fData);
+  throw runtime_error(message.str());
 }
 
 //------------------------------------------------------------------------------
 
 const char *ExRootConfParam::GetString(const char *defaultValue)
 {
-  const char *result = defaultValue;
-  if(fObject) result = Tcl_GetStringFromObj(fObject, 0);
-  return result;
+  stringstream message;
+
+  if(!fData) return defaultValue;
+
+  if(cJSON_IsString(fData)) return cJSON_GetStringValue(fData);
+
+  return cJSON_Print(fData);
 }
 
 //------------------------------------------------------------------------------
 
 int ExRootConfParam::GetSize()
 {
-  stringstream message;
-  int length = 0;
-  if(fObject && TCL_OK != Tcl_ListObjLength(fTclInterp, fObject, &length))
-  {
-    message << "parameter '" << fName << "' is not a list." << endl;
-    message << fName << " = " << Tcl_GetStringFromObj(fObject, 0);
-    throw runtime_error(message.str());
-  }
-  return length;
+  if(!fData) return 0;
+
+  if(cJSON_IsArray(fData)) return cJSON_GetArraySize(fData);
+
+  return 1;
 }
 
 //------------------------------------------------------------------------------
 
 ExRootConfParam ExRootConfParam::operator[](int index)
 {
-  stringstream message;
-  Tcl_Obj *object = 0;
-  if(fObject && TCL_OK != Tcl_ListObjIndex(fTclInterp, fObject, index, &object))
-  {
-    message << "parameter '" << fName << "' is not a list." << endl;
-    message << fName << " = " << Tcl_GetStringFromObj(fObject, 0);
-    throw runtime_error(message.str());
-  }
-  return ExRootConfParam(fName, object, fTclInterp);
+  if(!fData) ExRootConfParam(GetName(), fData);
+
+  if(cJSON_IsArray(fData)) return ExRootConfParam(GetName(), cJSON_GetArrayItem(fData, index));
+
+  return ExRootConfParam(GetName(), fData);
 }

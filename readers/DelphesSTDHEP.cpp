@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
     confReader = new ExRootConfReader;
     confReader->ReadFile(argv[1]);
 
-    maxEvents = confReader->GetInt("::MaxEvents", 0);
-    skipEvents = confReader->GetInt("::SkipEvents", 0);
+    maxEvents = confReader->GetInt("/MaxEvents", 0);
+    skipEvents = confReader->GetInt("/SkipEvents", 0);
 
     if(maxEvents < 0)
     {

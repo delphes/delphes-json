@@ -115,15 +115,15 @@ void Delphes::Init()
   TString cl, name;
   ExRootTask *task;
 
-  ExRootConfParam param = confReader->GetParam("::ExecutionPath");
+  ExRootConfParam param = confReader->GetParam("/ExecutionPath");
   Long_t i, size = param.GetSize();
 
-  gRandom->SetSeed(confReader->GetInt("::RandomSeed", 0));
+  gRandom->SetSeed(confReader->GetInt("/RandomSeed", 0));
 
   for(i = 0; i < size; ++i)
   {
     name = param[i].GetString();
-    cl = confReader->GetString(name + "::Class", "");
+    cl = confReader->GetString(TString("/") + name + "/Class", "");
     if(cl != "")
     {
       task = NewTask(cl, name);

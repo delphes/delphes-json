@@ -68,8 +68,8 @@ add_library(Delphes SHARED
   $<TARGET_OBJECTS:classes>
   $<TARGET_OBJECTS:modules>
   $<TARGET_OBJECTS:ExRootAnalysis>
+  $<TARGET_OBJECTS:cJSON>
   $<TARGET_OBJECTS:fastjet>
-  $<TARGET_OBJECTS:tcl>
   $<TARGET_OBJECTS:Hector>
   $<TARGET_OBJECTS:PUPPI>
   $<TARGET_OBJECTS:TrackCovariance>

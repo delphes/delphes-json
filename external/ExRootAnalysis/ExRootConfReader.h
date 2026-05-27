@@ -3,7 +3,7 @@
 
 /** \class ExRootConfReader
  *
- *  Class handling output ROOT tree
+ *  Class configuration data
  *
  *  \author P. Demin - UCL, Louvain-la-Neuve
  *
@@ -11,13 +11,12 @@
 
 #include "TNamed.h"
 
-struct Tcl_Obj;
-struct Tcl_Interp;
+struct cJSON;
 
-class ExRootConfParam
+class ExRootConfParam: public TNamed
 {
 public:
-  ExRootConfParam(const char *name = 0, Tcl_Obj *object = 0, Tcl_Interp *interp = 0);
+  ExRootConfParam(const char *name = 0, cJSON *data = 0);
 
   int GetInt(int defaultValue = 0);
   long GetLong(long defaultValue = 0);
@@ -29,9 +28,9 @@ public:
   ExRootConfParam operator[](int index);
 
 private:
-  const char *fName; //!
-  Tcl_Obj *fObject; //!
-  Tcl_Interp *fTclInterp; //!
+  cJSON *fData = nullptr; //!
+
+  ClassDef(ExRootConfParam, 1)
 };
 
 //------------------------------------------------------------------------------
@@ -42,7 +41,8 @@ public:
   ExRootConfReader();
   ~ExRootConfReader();
 
-  void ReadFile(const char *fileName, bool isTop = true);
+  void ReadData(const char *data);
+  void ReadFile(const char *fileName);
 
   int GetInt(const char *name, int defaultValue, int index = -1);
   long GetLong(const char *name, long defaultValue, int index = -1);
@@ -51,12 +51,8 @@ public:
   const char *GetString(const char *name, const char *defaultValue, int index = -1);
   ExRootConfParam GetParam(const char *name);
 
-  const char *GetTopDir() const { return fTopDir; }
-
 private:
-  const char *fTopDir; //!
-
-  Tcl_Interp *fTclInterp; //!
+  cJSON *fData = nullptr; //!
 
   ClassDef(ExRootConfReader, 1)
 };

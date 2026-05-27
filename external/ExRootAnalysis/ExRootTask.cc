@@ -174,11 +174,11 @@ ExRootConfParam ExRootTask::GetParam(const char *name)
 {
   if(fConfReader)
   {
-    return fConfReader->GetParam(TString(GetName()) + "::" + name);
+    return fConfReader->GetParam(TString("/") + GetName() + "/" + name);
   }
   else
   {
-    return ExRootConfParam(TString(GetName()) + "::" + name, 0, 0);
+    return ExRootConfParam(TString("/") + GetName() + "/" + name, 0);
   }
 }
 
@@ -188,7 +188,7 @@ int ExRootTask::GetInt(const char *name, int defaultValue, int index)
 {
   if(fConfReader)
   {
-    return fConfReader->GetInt(TString(GetName()) + "::" + name, defaultValue, index);
+    return fConfReader->GetInt(TString("/") + GetName() + "/" + name, defaultValue, index);
   }
   else
   {
@@ -202,7 +202,7 @@ long ExRootTask::GetLong(const char *name, long defaultValue, int index)
 {
   if(fConfReader)
   {
-    return fConfReader->GetLong(TString(GetName()) + "::" + name, defaultValue, index);
+    return fConfReader->GetLong(TString("/") + GetName() + "/" + name, defaultValue, index);
   }
   else
   {
@@ -216,7 +216,7 @@ double ExRootTask::GetDouble(const char *name, double defaultValue, int index)
 {
   if(fConfReader)
   {
-    return fConfReader->GetDouble(TString(GetName()) + "::" + name, defaultValue, index);
+    return fConfReader->GetDouble(TString("/") + GetName() + "/" + name, defaultValue, index);
   }
   else
   {
@@ -230,7 +230,7 @@ bool ExRootTask::GetBool(const char *name, bool defaultValue, int index)
 {
   if(fConfReader)
   {
-    return fConfReader->GetBool(TString(GetName()) + "::" + name, defaultValue, index);
+    return fConfReader->GetBool(TString("/") + GetName() + "/" + name, defaultValue, index);
   }
   else
   {
@@ -244,7 +244,7 @@ const char *ExRootTask::GetString(const char *name, const char *defaultValue, in
 {
   if(fConfReader)
   {
-    return fConfReader->GetString(TString(GetName()) + "::" + name, defaultValue, index);
+    return fConfReader->GetString(TString("/") + GetName() + "/" + name, defaultValue, index);
   }
   else
   {
