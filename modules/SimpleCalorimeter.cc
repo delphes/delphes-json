@@ -95,11 +95,25 @@ void SimpleCalorimeter::Init()
     paramPhiBins = param[i * 2 + 1];
     sizePhiBins = paramPhiBins.GetSize();
 
-    for(j = 0; j < sizeEtaBins; ++j)
+    if(sizePhiBins == 1)
     {
-      for(k = 0; k < sizePhiBins; ++k)
+      sizePhiBins = paramPhiBins.GetInt() / 2;
+      for(j = 0; j < sizeEtaBins; ++j)
       {
-        fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        for(k = -sizePhiBins; k <= sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(TMath::Pi() * k / sizePhiBins);
+        }
+      }
+    }
+    else
+    {
+      for(j = 0; j < sizeEtaBins; ++j)
+      {
+        for(k = 0; k < sizePhiBins; ++k)
+        {
+          fBinMap[paramEtaBins[j].GetDouble()].insert(paramPhiBins[k].GetDouble());
+        }
       }
     }
   }
