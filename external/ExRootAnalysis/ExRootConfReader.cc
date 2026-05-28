@@ -1,7 +1,7 @@
 
 /** \class ExRootConfReader
  *
- *  Class configuration data
+ *  Class handling configuration data
  *
  *  \author P. Demin - UCL, Louvain-la-Neuve
  *
